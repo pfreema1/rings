@@ -19,7 +19,7 @@ void main() {
 
     float dist = distance(offsetUv, vec2(0.5, 0.5));
     float rings = 50.0;
-    float velocity = 0.5;
+    float velocity = 0.55;
     float b = 0.003;  // size of smoothed border
     
     float offset = uTime * velocity;
