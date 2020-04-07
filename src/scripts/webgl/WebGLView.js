@@ -170,7 +170,7 @@ export default class WebGLView {
       50,
       window.innerWidth / window.innerHeight,
       0.01,
-      100
+      500
     );
     this.controls = new OrbitControls(this.bgCamera, this.renderer.domElement);
 

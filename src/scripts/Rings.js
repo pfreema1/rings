@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import glslify from 'glslify';
 import fitPlaneToScreen from './utils/fitPlaneToScreen';
+import ringsFrag from '../shaders/rings.frag';
+import basicDiffuseVert from '../shaders/basicDiffuse.vert';
 
 export default class Rings {
     constructor(bgScene, bgCamera) {
@@ -12,35 +14,31 @@ export default class Rings {
 
         this.dims = fitPlaneToScreen(this.bgCamera, 0, window.innerWidth, window.innerHeight);
 
-        this.initMeshes();
+        this.initPlane();
     }
 
-    initMeshes() {
-        for (let i = 0; i < this.NUM_RINGS; i++) {
-            this.size = Math.max(this.dims.width, this.dims.height);
-            const geo = new THREE.RingBufferGeometry(0.95 * this.size, this.size, 30, 1, 0, 6.3);
-            const mat = new THREE.MeshBasicMaterial({ color: 0xECBDF1, side: THREE.DoubleSide });
+    initPlane() {
+        this.geo = new THREE.PlaneBufferGeometry(this.dims.width, this.dims.height, 128, 128);
+        this.mat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: {
+                    value: 0.0
+                },
+                uResolution: {
+                    value: new THREE.Vector2(window.innerWidth, window.innerHeight)
+                }
+            },
+            vertexShader: glslify(basicDiffuseVert),
+            fragmentShader: glslify(ringsFrag)
+        });
 
-            const mesh = new THREE.Mesh(geo, mat);
-            this.bgScene.add(mesh);
-            this.rings.push(mesh);
-        }
-    }
-
-    updateRing(i, time) {
-        const mesh = this.rings[i];
-
-        mesh.position.y = -this.MOVEMENT_RADIUS * Math.sin(time * 2 + i);
-        mesh.position.z = this.MOVEMENT_RADIUS * Math.cos(time * 2 + i);
-
-        // mesh.rotation.x = -(2 * Math.PI * 2) * time + i;
+        this.mesh = new THREE.Mesh(this.geo, this.mat);
+        this.mesh.position.z = 0;
+        this.mesh.scale.x = 3;
+        this.bgScene.add(this.mesh);
     }
 
     update(time) {
-        time *= 0.1;
-
-        for (let i = 0; i < this.NUM_RINGS; i++) {
-            this.updateRing(i, time);
-        }
+        this.mat.uniforms.uTime.value = time;
     }
 }
