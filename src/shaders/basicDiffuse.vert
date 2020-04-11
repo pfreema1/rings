@@ -23,8 +23,12 @@ void main() {
   vec3 offsetPos = position;
 
   float v = map(uv.y, 0.0, 1.0, 0.0, PI);
+  float m = map(uv.x, 0.0, 1.0, 0.0, PI);
 
-  offsetPos.z = sin(v) * -8.0;
+  // offsetPos.z = sin(v) * -1.0;
+  // offsetPos.z += sin(m) * -1.0;
+
+  // offsetPos += vNormal * uv.x;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(offsetPos,1.0);
 }
