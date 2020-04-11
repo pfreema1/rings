@@ -6,8 +6,6 @@ import OrbitControls from 'three-orbitcontrols';
 import TweenMax from 'TweenMax';
 import baseDiffuseFrag from '../../shaders/basicDiffuse.frag';
 import basicDiffuseVert from '../../shaders/basicDiffuse.vert';
-import MouseCanvas from '../MouseCanvas';
-import TextCanvas from '../TextCanvas';
 import RenderTri from '../RenderTri';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -15,12 +13,12 @@ import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass.js';
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { debounce } from '../utils/debounce';
 import Rings from '../Rings';
+import { AfterimagePass } from '../postprocessing/AfterimagePass';
 
 export default class WebGLView {
   constructor(app) {
     this.app = app;
     this.PARAMS = {
-      rotSpeed: 0.005
     };
 
     this.init();
@@ -31,9 +29,7 @@ export default class WebGLView {
     this.initBgScene();
     this.initLights();
     this.initTweakPane();
-    this.setupTextCanvas();
     this.initMouseMoveListen();
-    this.initMouseCanvas();
     this.initRenderTri();
     this.initPostProcessing();
     this.initResizeHandler();
@@ -42,7 +38,7 @@ export default class WebGLView {
   }
 
   initRings() {
-    this.rings = new Rings(this.bgScene, this.bgCamera);
+    this.rings = new Rings(this.bgScene, this.bgCamera, this.pane, this.PARAMS);
   }
 
   initResizeHandler() {
@@ -66,15 +62,6 @@ export default class WebGLView {
         this.bgCamera.aspect = this.width / this.height;
         this.bgCamera.updateProjectionMatrix();
 
-        // text canvas
-        this.textCanvas.canvas.width = this.width;
-        this.textCanvas.canvas.height = this.height;
-        this.setupTextCanvas();
-        this.renderTri.triMaterial.uniforms.uTextCanvas.value = this.textCanvas.texture;
-
-        // mouse canvas
-        this.mouseCanvas.canvas.width = this.width;
-        this.mouseCanvas.canvas.height = this.height;
 
         // composer
         this.composer.setSize(this.width, this.height);
@@ -87,38 +74,61 @@ export default class WebGLView {
 
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
-    // const bloomPass = new BloomPass(
-    //   1, // strength
-    //   25, // kernel size
-    //   4, // sigma ?
-    //   256 // blur render target resolution
-    // );
-    // this.composer.addPass(bloomPass);
-
-    // const filmPass = new FilmPass(
-    //   0.35, // noise intensity
-    //   0.025, // scanline intensity
-    //   648, // scanline count
-    //   false // grayscale
-    // );
-    // filmPass.renderToScreen = true;
-    // this.composer.addPass(filmPass);
+    // this.afterimagePass = new AfterimagePass();
+    // this.composer.addPass(this.afterimagePass);
   }
 
   initTweakPane() {
     this.pane = new Tweakpane();
 
-    this.pane
-      .addInput(this.PARAMS, 'rotSpeed', {
-        min: 0.0,
-        max: 0.5
-      })
-      .on('change', value => { });
+    this.PARAMS.camPos = true;
+    this.startingCamPos = this.bgCamera.position;
+
+    this.pane.addInput(this.PARAMS, 'camPos').on('change', value => {
+      console.log(value);
+      if (!value) {
+        this.bgCamera.position.set(-45.907, 26.548, 0.932);
+        this.controls.update();
+      } else {
+        this.bgCamera.position.set(68.1257, -33.566, 0.8802);
+        this.controls.update();
+      }
+    });
+
+    this.pane.addButton({
+      title: 'New Cam Pos'
+    }).on('click', value => {
+      const range = 100;
+      const offset = range / 2;
+      this.bgCamera.position.set(
+        Math.random() * range - offset,
+        Math.random() * range - offset,
+        Math.random() * range - offset,
+      );
+      this.controls.update();
+    });
+
+    this.pane.addButton({
+      title: 'Randomize All'
+    }).on('click', value => {
+      // new pos
+      const range = 100;
+      const offset = range / 2;
+      this.bgCamera.position.set(
+        Math.random() * range - offset,
+        Math.random() * range - offset,
+        Math.random() * range - offset,
+      );
+      this.controls.update();
+
+      // new caAtten
+      this.renderTri.triMaterial.uniforms.caAtten.value = this.PARAMS.caAtten = Math.random();
+
+      // new cmykAtten
+      this.renderTri.triMaterial.uniforms.cmykAtten.value = this.PARAMS.cmykAtten = Math.random();
+    });
   }
 
-  initMouseCanvas() {
-    this.mouseCanvas = new MouseCanvas();
-  }
 
   initMouseMoveListen() {
     this.mouse = new THREE.Vector2();
@@ -129,7 +139,6 @@ export default class WebGLView {
       this.mouse.x = clientX; //(clientX / this.width) * 2 - 1;
       this.mouse.y = clientY; //-(clientY / this.height) * 2 + 1;
 
-      this.mouseCanvas.addTouch(this.mouse);
     });
   }
 
@@ -144,10 +153,6 @@ export default class WebGLView {
     this.clock = new THREE.Clock();
   }
 
-  setupTextCanvas() {
-    this.textCanvas = new TextCanvas(this);
-  }
-
 
   initRenderTri() {
     this.resize();
@@ -156,8 +161,8 @@ export default class WebGLView {
       this.scene,
       this.renderer,
       this.bgRenderTarget,
-      this.mouseCanvas,
-      this.textCanvas
+      this.pane,
+      this.PARAMS
     );
   }
 
@@ -174,8 +179,11 @@ export default class WebGLView {
     );
     this.controls = new OrbitControls(this.bgCamera, this.renderer.domElement);
 
-    this.bgCamera.position.z = 3;
-    // this.bgCamera.position.y = 10;
+    // this.bgCamera.position.z = 3;
+    // this.bgCamera.position.x = 15;
+    // this.bgCamera.position.y = 7;
+    this.bgCamera.position.set(68.1257, -33.566, 0.8802);
+    // this.bgCamera.lookAt(new THREE.Vector3(10, 15, 0));
     this.controls.update();
 
     this.bgScene = new THREE.Scene();
@@ -203,17 +211,15 @@ export default class WebGLView {
     if (this.trackball) this.trackball.handleResize();
   }
 
-  updateTextCanvas(time) {
-    this.textCanvas.textLine.update(time);
-    this.textCanvas.textLine.draw(time);
-    this.textCanvas.texture.needsUpdate = true;
-  }
-
   update() {
     const delta = this.clock.getDelta();
     const time = performance.now() * 0.0005;
 
     this.controls.update();
+
+
+    // console.log("update -> this.bgCamera.position", this.bgCamera.position)
+
 
     if (this.renderTri) {
       this.renderTri.triMaterial.uniforms.uTime.value = time;
@@ -223,18 +229,11 @@ export default class WebGLView {
       this.rings.update(time);
     }
 
-    if (this.mouseCanvas) {
-      this.mouseCanvas.update();
-    }
-
-    if (this.textCanvas) {
-      this.updateTextCanvas(time);
-    }
-
     if (this.trackball) this.trackball.update();
   }
 
   draw() {
+
     this.renderer.setRenderTarget(this.bgRenderTarget);
     this.renderer.render(this.bgScene, this.bgCamera);
     this.renderer.setRenderTarget(null);

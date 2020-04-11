@@ -4,6 +4,9 @@
 varying vec3 vNormal;
 varying vec3 fragPos;
 varying vec2 vUv;
+varying float distToCamera;
+uniform float uTime;
+uniform float vertWobble;
 
 float map(float value, float min1, float max1, float min2, float max2) {
   return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
@@ -29,6 +32,11 @@ void main() {
   // offsetPos.z += sin(m) * -1.0;
 
   // offsetPos += vNormal * uv.x;
+
+  offsetPos.z += vertWobble * sin(uTime * uv.x);
+
+  vec4 cs_position = modelViewMatrix * vec4(position, 1.0);
+  distToCamera = -cs_position.z;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(offsetPos,1.0);
 }

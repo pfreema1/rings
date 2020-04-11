@@ -22,7 +22,7 @@ CustomSinCurve.prototype.getPoint = function (t) {
 
     var tx = t * 6 - 3;
     var ty = Math.sin(2 * Math.PI * t);
-    var tz = 0;
+    var tz = 0; //Math.cos(0.5 * Math.PI * t);
 
     return new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale);
 
@@ -30,16 +30,45 @@ CustomSinCurve.prototype.getPoint = function (t) {
 
 
 export default class Rings {
-    constructor(bgScene, bgCamera) {
+    constructor(bgScene, bgCamera, pane, PARAMS) {
         this.bgScene = bgScene;
         this.bgCamera = bgCamera;
         this.NUM_RINGS = 1;
         this.rings = [];
         this.MOVEMENT_RADIUS = 6;
+        this.pane = pane;
+        this.PARAMS = PARAMS;
 
         this.init();
 
+        this.addGUI();
+    }
 
+    addGUI() {
+        this.PARAMS.timeAtten = 0.7;
+        this.PARAMS.offsetAtten = 0.0;
+        this.PARAMS.vertWobble = 0.0;
+
+        this.pane.addInput(this.PARAMS, 'timeAtten', {
+            min: 0.0,
+            max: 3.0
+        }).on('change', value => {
+            this.mat.uniforms.timeAtten.value = value;
+        });
+
+        this.pane.addInput(this.PARAMS, 'offsetAtten', {
+            min: -1.0,
+            max: 1.0
+        }).on('change', value => {
+            this.mat.uniforms.offsetAtten.value = value;
+        });
+
+        this.pane.addInput(this.PARAMS, 'vertWobble', {
+            min: -5.0,
+            max: 5.0
+        }).on('change', value => {
+            this.mat.uniforms.vertWobble.value = value;
+        })
     }
 
     async init() {
@@ -49,7 +78,7 @@ export default class Rings {
 
         this.initMaterial();
 
-        // this.addClickEvent();
+        // this.addEvent();
     }
 
     loadMesh() {
@@ -65,14 +94,22 @@ export default class Rings {
         });
     }
 
-    addClickEvent() {
+    addEvent() {
         document.addEventListener('click', () => {
             TweenMax.fromTo(this.mat.uniforms.timeMulti, 0.4, {
-                value: -1.0
+                value: 1.2
             }, {
-                value: 0.5,
-                ease: 'circ.easeOut',
-            })
+                value: 1.0,
+                ease: Power3.easeInOut,
+            });
+
+            // TweenMax.fromTo(this.mat.uniforms.timeMulti, 0.4, {
+            //     value: 1.0
+            // }, {
+            //     value: 0.0,
+            //     delay: 0.4,
+            //     ease: Power3.easeInOut,
+            // });
         });
     }
 
@@ -93,8 +130,14 @@ export default class Rings {
                 uResolution: {
                     value: new THREE.Vector2(window.innerWidth, window.innerHeight)
                 },
-                timeMulti: {
-                    value: 0.5
+                timeAtten: {
+                    value: 0.7
+                },
+                offsetAtten: {
+                    value: 0.0
+                },
+                vertWobble: {
+                    value: 0.0
                 }
             },
             vertexShader: glslify(basicDiffuseVert),

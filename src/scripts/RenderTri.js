@@ -6,12 +6,12 @@ import fullScreenTriFrag from './../shaders/fullScreenTri.frag';
 import fullScreenTriVert from './../shaders/fullScreenTri.vert';
 
 export default class RenderTri {
-  constructor(scene, renderer, bgRenderTarget, mouseCanvas, textCanvas) {
+  constructor(scene, renderer, bgRenderTarget, pane, PARAMS) {
     this.scene = scene;
     this.renderer = renderer;
     this.bgRenderTarget = bgRenderTarget;
-    this.mouseCanvas = mouseCanvas;
-    this.textCanvas = textCanvas;
+    this.pane = pane;
+    this.PARAMS = PARAMS;
 
     const resolution = new THREE.Vector2();
     this.renderer.getDrawingBufferSize(resolution);
@@ -34,16 +34,14 @@ export default class RenderTri {
           type: 't',
           value: this.bgRenderTarget.texture
         },
-        uMouseCanvas: {
-          type: 't',
-          value: this.mouseCanvas.texture
-        },
-        uTextCanvas: {
-          type: 't',
-          value: this.textCanvas.texture
-        },
         uResolution: { value: resolution },
         uTime: {
+          value: 0.0
+        },
+        caAtten: {
+          value: 0.0
+        },
+        cmykAtten: {
           value: 0.0
         }
       }
@@ -56,6 +54,33 @@ export default class RenderTri {
     renderTri.frustumCulled = false;
 
     this.scene.add(renderTri);
+
+    this.addEvent();
+
+    this.addGUI();
+  }
+
+  addGUI() {
+    this.PARAMS.caAtten = 0;
+    this.PARAMS.cmykAtten = 0;
+
+    this.pane.addInput(this.PARAMS, 'caAtten', {
+      min: 0.0,
+      max: 1.0
+    }).on('change', value => {
+      this.triMaterial.uniforms.caAtten.value = value;
+    });
+
+    this.pane.addInput(this.PARAMS, 'cmykAtten', {
+      min: 0.0,
+      max: 1.0
+    }).on('change', value => {
+      this.triMaterial.uniforms.cmykAtten.value = value;
+    });
+  }
+
+  addEvent() {
+    // document.addEventListener
   }
 
   returnRenderTriGeometry() {
