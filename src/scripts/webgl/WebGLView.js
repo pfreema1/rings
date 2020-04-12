@@ -45,6 +45,8 @@ export default class WebGLView {
   }
 
   addEvents() {
+    this.clickCount = 0;
+
     document.addEventListener('click', this.randomizeSettings.bind(this))
   }
 
@@ -138,8 +140,10 @@ export default class WebGLView {
   }
 
   randomizeSettings() {
-    // new pos
-    const range = 100;
+    this.clickCount++;
+
+    // new pos - make it more likely to place the camera inside tube
+    const range = this.clickCount % 4 === 0 ? 50 : 100;
     const offset = range / 2;
     this.bgCamera.position.set(
       Math.random() * range - offset,
@@ -275,7 +279,7 @@ export default class WebGLView {
     this.renderer.render(this.scene, this.camera);
 
     if (this.composer) {
-      this.ssaaRenderPass.sampleLevel = 1;
+      this.ssaaRenderPass.sampleLevel = 0;
 
       this.composer.render();
     }

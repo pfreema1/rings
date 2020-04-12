@@ -60,7 +60,8 @@ void main() {
     vec3 caColor = vec3(ca1, ca2, ca3);
 
     // make white part have a little reflection look
-    color = mix(sceneColor, offsetColor, 0.01 * sceneColor.r);
+    // color = mix(sceneColor, offsetColor, 0.01 * sceneColor.r);
+    color = sceneColor;
 
     color.rgb = mix(color.rgb, caColor, 1.0);
 
