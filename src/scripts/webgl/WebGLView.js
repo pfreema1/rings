@@ -7,13 +7,18 @@ import TweenMax from 'TweenMax';
 import baseDiffuseFrag from '../../shaders/basicDiffuse.frag';
 import basicDiffuseVert from '../../shaders/basicDiffuse.vert';
 import RenderTri from '../RenderTri';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass.js';
-import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { debounce } from '../utils/debounce';
 import Rings from '../Rings';
-import { AfterimagePass } from '../postprocessing/AfterimagePass';
+
+// post processing
+import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass.js';
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+// import { AfterimagePass } from 'three/examples/jsm/postprocessing/SSAARenderPass';
+// import { SSAARenderPass } from '';
+// import { CopyShader } from 'three/examples/jsm/postprocessing/CopyShader';
+// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 
 export default class WebGLView {
   constructor(app) {
@@ -74,8 +79,20 @@ export default class WebGLView {
 
     this.composer.addPass(new RenderPass(this.scene, this.camera));
 
+    // after image
     // this.afterimagePass = new AfterimagePass();
     // this.composer.addPass(this.afterimagePass);
+
+    // anti aliasing
+    // this.ssaaRenderPass = new SSAARenderPass(this.scene, this.camera);
+    // this.ssaaRenderPass.unbiased = false;
+    // debugger;
+    // this.composer.addPass(this.ssaaRenderPass);
+
+    // this.copyPass = new ShaderPass(CopyShader);
+    // this.composer.addPass(this.copyPass);
+
+
   }
 
   initTweakPane() {
@@ -122,10 +139,13 @@ export default class WebGLView {
       this.controls.update();
 
       // new caAtten
-      this.renderTri.triMaterial.uniforms.caAtten.value = this.PARAMS.caAtten = Math.random();
+      this.renderTri.triMaterial.uniforms.caAtten.value = this.PARAMS.caAtten = Math.random() < 0.5 ? 0.0 : 1.0;
 
       // new cmykAtten
       this.renderTri.triMaterial.uniforms.cmykAtten.value = this.PARAMS.cmykAtten = Math.random();
+
+      // new vertWobble
+      this.rings.mat.uniforms.vertWobble.value = Math.random() * 4 - 2;
     });
   }
 

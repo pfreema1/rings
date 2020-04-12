@@ -121,7 +121,7 @@ export default class Rings {
         // this.geo = new THREE.SphereBufferGeometry(3, 128, 128);
 
         var path = new CustomSinCurve(10);
-        this.geo = new THREE.TubeBufferGeometry(path, 128, 8, 128, false);
+        this.geo = new THREE.TubeBufferGeometry(path, 256, 8, 256, false);
         this.mat = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: {
