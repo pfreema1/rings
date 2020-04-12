@@ -16,9 +16,9 @@ import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 // import { AfterimagePass } from 'three/examples/jsm/postprocessing/SSAARenderPass';
-// import { SSAARenderPass } from '';
-// import { CopyShader } from 'three/examples/jsm/postprocessing/CopyShader';
-// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass';
+import { CopyShader } from 'three/examples/jsm/shaders/CopyShader';
 
 export default class WebGLView {
   constructor(app) {
@@ -40,6 +40,12 @@ export default class WebGLView {
     this.initResizeHandler();
 
     this.initRings();
+
+    this.addEvents();
+  }
+
+  addEvents() {
+    document.addEventListener('click', this.randomizeSettings.bind(this))
   }
 
   initRings() {
@@ -84,13 +90,12 @@ export default class WebGLView {
     // this.composer.addPass(this.afterimagePass);
 
     // anti aliasing
-    // this.ssaaRenderPass = new SSAARenderPass(this.scene, this.camera);
-    // this.ssaaRenderPass.unbiased = false;
-    // debugger;
-    // this.composer.addPass(this.ssaaRenderPass);
+    this.ssaaRenderPass = new SSAARenderPass(this.scene, this.camera);
+    this.ssaaRenderPass.unbiased = false;
+    this.composer.addPass(this.ssaaRenderPass);
 
-    // this.copyPass = new ShaderPass(CopyShader);
-    // this.composer.addPass(this.copyPass);
+    this.copyPass = new ShaderPass(CopyShader);
+    this.composer.addPass(this.copyPass);
 
 
   }
@@ -128,25 +133,31 @@ export default class WebGLView {
     this.pane.addButton({
       title: 'Randomize All'
     }).on('click', value => {
-      // new pos
-      const range = 100;
-      const offset = range / 2;
-      this.bgCamera.position.set(
-        Math.random() * range - offset,
-        Math.random() * range - offset,
-        Math.random() * range - offset,
-      );
-      this.controls.update();
-
-      // new caAtten
-      this.renderTri.triMaterial.uniforms.caAtten.value = this.PARAMS.caAtten = Math.random() < 0.5 ? 0.0 : 1.0;
-
-      // new cmykAtten
-      this.renderTri.triMaterial.uniforms.cmykAtten.value = this.PARAMS.cmykAtten = Math.random();
-
-      // new vertWobble
-      this.rings.mat.uniforms.vertWobble.value = Math.random() * 4 - 2;
+      this.randomizeSettings();
     });
+  }
+
+  randomizeSettings() {
+    // new pos
+    const range = 100;
+    const offset = range / 2;
+    this.bgCamera.position.set(
+      Math.random() * range - offset,
+      Math.random() * range - offset,
+      Math.random() * range - offset,
+    );
+    this.controls.update();
+
+    // new caAtten
+    this.renderTri.triMaterial.uniforms.caAtten.value = this.PARAMS.caAtten = Math.random() < 0.5 ? 0.0 : 1.0;
+
+    // new cmykAtten
+    this.renderTri.triMaterial.uniforms.cmykAtten.value = this.PARAMS.cmykAtten = Math.random();
+
+    // new vertWobble
+    this.rings.mat.uniforms.vertWobble.value = Math.random() * 4 - 2;
+
+    this.pane.refresh();
   }
 
 
@@ -198,6 +209,9 @@ export default class WebGLView {
       500
     );
     this.controls = new OrbitControls(this.bgCamera, this.renderer.domElement);
+    this.controls.enablePan = false;
+    this.controls.enableRotate = false;
+    this.controls.enableZoom = false;
 
     // this.bgCamera.position.z = 3;
     // this.bgCamera.position.x = 15;
@@ -261,6 +275,8 @@ export default class WebGLView {
     this.renderer.render(this.scene, this.camera);
 
     if (this.composer) {
+      this.ssaaRenderPass.sampleLevel = 1;
+
       this.composer.render();
     }
   }
