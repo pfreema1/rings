@@ -137,6 +137,9 @@ export default class WebGLView {
     }).on('click', value => {
       this.randomizeSettings();
     });
+
+    this.pane.containerElem_.style.display = 'none';
+
   }
 
   randomizeSettings() {
